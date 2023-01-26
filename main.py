@@ -32,12 +32,49 @@ def get_target():
         return at_to_bt(target)
 
 
+def display_result(items):
+    # prints out best items in blocks of 5, with the option to view more or exit
+    print("Best listings found:")
+    for i in range(0, len(items), 5):
+        for item in items[i : i + 5]:
+            print(
+                item["userAsset"]["asset"]["name"]
+                + " for $"
+                + str(round(item["price"], 2))
+                + " at $"
+                + str(item["rate"])
+                + "/1kR$ for "
+                + str(bt_to_at(item["userAsset"]["asset"]["rap"]))
+                + " A/T"
+            )
+        if i + 5 < len(items):
+            while True:
+                try:
+                    choice = int(
+                        input("Would you like to see more? (1 = yes, 2 = no): ")
+                    )
+                except TypeError:
+                    print("That is not a valid number. Please enter an integer.")
+                    continue
+                if choice == 1:
+                    break
+                elif choice == 2:
+                    return
+                else:
+                    print("That is not a valid choice. Please enter 1 or 2.")
+                    continue
+
+
 def at_to_bt(after_tax: int):
     return floor(after_tax / 0.7)
 
 
 def bt_to_at(before_tax: int):
     return floor(before_tax * 0.7)
+
+
+def difference(x, y):
+    return abs(x - y)
 
 
 def main():
@@ -47,28 +84,31 @@ def main():
         flip_items = get_flip_items()
         valued_items = get_valued_items()
 
+        print(f"Target: {target} B/T {bt_to_at(target)} A/T")
+
         # removes non-valued, projected, and non-stable items from flip_items
-        for item in flip_items:
-            if item["id"] not in valued_items:
+        for item in flip_items.copy():
+            if item["userAsset"]["asset"]["assetId"] not in valued_items:
                 flip_items.remove(item)
 
-        flip_items = sorted(flip_items, key=lambda x: x["rate"])
-
-        # get item with rap closest to target but not less than target
+        # remove duplicate items with higher rate than lowest of that item
+        lowest_items = {}
         for item in flip_items:
-            if item["userAsset"]["asset"]["rap"] >= target:
-                found = item
-                break
+            if item["userAsset"]["asset"]["name"] not in lowest_items.keys():
+                lowest_items[item["userAsset"]["asset"]["name"]] = item
+            elif (
+                item["rate"] < lowest_items[item["userAsset"]["asset"]["name"]]["rate"]
+            ):
+                lowest_items[item["userAsset"]["asset"]["name"]] = item
 
-        print(
-            "Best item found: "
-            + found["userAsset"]["asset"]["name"]
-            + " for $"
-            + str(round(found["price"], 2))
-            + " at $"
-            + str(found["rate"])
-            + "/1kR$"
+        # sort by difference between item rap and target rap
+        lowest_items = [x for x in lowest_items.values()]
+        result = sorted(
+            lowest_items,
+            key=lambda x: difference(x["userAsset"]["asset"]["rap"], target),
         )
+
+        display_result(result)
 
 
 if __name__ == "__main__":
