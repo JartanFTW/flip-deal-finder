@@ -26,7 +26,7 @@ def get_target():
     while True:
         try:
             target = int(input("Please input the target robux amount A/T: "))
-        except TypeError:
+        except (TypeError, ValueError):
             print("That is not a valid number. Please enter an integer.")
             continue
         return at_to_bt(target)
@@ -53,7 +53,7 @@ def display_result(items):
                     choice = int(
                         input("Would you like to see more? (1 = yes, 2 = no): ")
                     )
-                except TypeError:
+                except (TypeError, ValueError):
                     print("That is not a valid number. Please enter an integer.")
                     continue
                 if choice == 1:
